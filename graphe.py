@@ -248,6 +248,8 @@ def comparer_algos(algo1, nom_algo1, algo2, nom_algo2, Nmax, p, num_instances=10
 
 
 def algo_branchement(G):
+    if not reste_arrete(G):
+        return set()
     C = set()
     for (i, j) in G._E.items():
         for e in j:
@@ -444,10 +446,10 @@ if __name__ == '__main__':
     print("Couplage:", algo_couplage(G))
     print("Glouton:", algo_glouton(G)) """
 
-    comparer_algos(algo_branchement, 'br', algo_branchement_bornes,
+    """ comparer_algos(algo_branchement, 'br', algo_branchement_bornes,
                    'brb', 20, PROBABILITE_ARETE, NOMBRE_INSTANCES)
     G = Graphe(fic="exempleinstance.txt")
-    print(algo_branchement(G))
+    print(algo_branchement(G)) """
 
     """
     G = Graphe(fic="exempleinstance.txt")
@@ -468,7 +470,7 @@ if __name__ == '__main__':
     print("Graphe :", G)
     print(
         f"Borne inférieure calculée (b1, b2, b3, max) : {calculer_borne_inf(G)}")
-    sol_bornes = algo_branchement_bornes(G)
+    sol_bornes = algo_branchement(G)
     sol_branch = algo_branchement_bornes_upg(G)
     print("solution branchement avec bornes",
           sol_branch, "taille =", len(sol_branch))
