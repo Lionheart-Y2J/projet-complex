@@ -430,6 +430,54 @@ def couverture_valide(G, C):
     return True
 
 
+def evaluer_rapport_approximation(algo_approche, nom_algo, Nmax, p, num_instances=10):
+    import numpy as np
+    tailles = np.linspace(5, Nmax, 5, dtype=int)
+    rapports = []
+    tailles_approche = []
+    tailles_optimales = []
+    
+    for n in tailles:
+        for _ in range(num_instances):
+            G = Graphe.generation(n, p)
+            
+            sol_approche = algo_approche(G)
+            sol_optimale = algo_branchement_bornes(G)
+            
+            if len(sol_optimale) == 0:
+                rapport = 1
+            else:
+                rapport = len(sol_approche) / len(sol_optimale)
+            
+            rapports.append(rapport)
+            tailles_approche.append(len(sol_approche))
+            tailles_optimales.append(len(sol_optimale))
+    
+    rapports_arr = np.array(rapports)
+    print(f"{nom_algo} - Rapport moyen: {rapports_arr.mean():.2f}, "
+          f"Median: {np.median(rapports_arr):.2f}, "
+          f"Min: {rapports_arr.min():.2f}, "
+          f"Pire cas: {rapports_arr.max():.2f}")
+    
+    print(f"Tailles approchées moyennes: {np.mean(tailles_approche):.2f}")
+    print(f"Tailles optimales moyennes: {np.mean(tailles_optimales):.2f}")
+    
+    parfait_count = np.sum(rapports_arr == 1)
+    percent_parfait = 100 * parfait_count / len(rapports_arr)
+    print(f"Pourcentage solutions parfaites : {percent_parfait:.1f}%")
+    
+    return {
+        "rapport_moyen": rapports_arr.mean(),
+        "rapport_median": np.median(rapports_arr),
+        "rapport_min": rapports_arr.min(),
+        "rapport_max": rapports_arr.max(),
+        "taille_moyenne_approchee": np.mean(tailles_approche),
+        "taille_moyenne_optimale": np.mean(tailles_optimales),
+        "pourcentage_parfait": percent_parfait
+    }
+
+
+
 if __name__ == '__main__':
     N_MAX = 30
     PROBABILITE_ARETE = 0.1
@@ -476,4 +524,59 @@ if __name__ == '__main__':
           sol_branch, "taille =", len(sol_branch))
     print("Solution branchement avec bornes amélioré :",
           sol_bornes, "taille =", len(sol_bornes))
-    # j'ai pas essayé avec les plots de comparer_algos_naifs()
+
+
+    #  évaluation expérimentale
+    print("=" * 80)
+    print("Évaluation du rapport d'approximation")
+    print("=" * 80)
+
+    # influence de la taille n avec 0.3
+    print("\n### Test 1 : Influence de la taille n (p = 0.3) ###")
+    resultats_glouton_p03 = evaluer_rapport_approximation(algo_glouton, "Glouton", Nmax=20, p=0.3, num_instances=15)
+    resultats_couplage_p03 = evaluer_rapport_approximation(algo_couplage, "Couplage", Nmax=20, p=0.3, num_instances=15)
+
+    # influence de la taille n avec 0.5
+    print("\n### Test 2 : Influence de la taille n (p = 0.5) ###")
+    resultats_glouton_p05 = evaluer_rapport_approximation(algo_glouton, "Glouton", Nmax=20, p=0.5, num_instances=15)
+    resultats_couplage_p05 = evaluer_rapport_approximation(algo_couplage, "Couplage", Nmax=20, p=0.5, num_instances=15)
+
+    # influence de la taille n avec 0.7
+    print("\n### Test 3 : Influence de la taille n (p = 0.7) ###")
+    resultats_glouton_p07 = evaluer_rapport_approximation(algo_glouton, "Glouton", Nmax=20, p=0.7, num_instances=15)
+    resultats_couplage_p07 = evaluer_rapport_approximation(algo_couplage, "Couplage", Nmax=20, p=0.7, num_instances=15)
+
+    # résumé comparatif
+    print("\n" + "=" * 80)
+    print("Résumé comparatif de Glouton et Couplage par rapport à Branch and bound")
+    print("=" * 80)
+
+    print("\n--- Densité p = 0.3 ---")
+    print(f"Glouton  - Pire cas: {resultats_glouton_p03['rapport_max']:.3f}")
+    print(f"Couplage - Pire cas: {resultats_couplage_p03['rapport_max']:.3f}")
+
+    print("\n--- Densité p = 0.5 ---")
+    print(f"Glouton  - Pire cas: {resultats_glouton_p05['rapport_max']:.3f}")
+    print(f"Couplage - Pire cas: {resultats_couplage_p05['rapport_max']:.3f}")
+
+    print("\n--- Densité p = 0.7 ---")
+    print(f"Glouton  - Pire cas: {resultats_glouton_p07['rapport_max']:.3f}")
+    print(f"Couplage - Pire cas: {resultats_couplage_p07['rapport_max']:.3f}")
+
+    # obtenir le pire cas global pour chaque algo
+    pire_glouton = max(
+        resultats_glouton_p03['rapport_max'],
+        resultats_glouton_p05['rapport_max'],
+        resultats_glouton_p07['rapport_max']
+    )
+    pire_couplage = max(
+        resultats_couplage_p03['rapport_max'],
+        resultats_couplage_p05['rapport_max'],
+        resultats_couplage_p07['rapport_max']
+    )
+
+    print("\n" + "=" * 80)
+    print(f"Pire rapport global - Glouton: {pire_glouton:.3f}")
+    print(f"PIRE rapport global - Couplage: {pire_couplage:.3f}")
+    print("=" * 80)
+    
